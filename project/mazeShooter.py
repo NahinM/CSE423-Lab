@@ -32,12 +32,18 @@ def showScreen():
 
     setupCamera()  # Configure camera perspective
     floor(Game.level)
-    player()              # Draw blocky character at player position
-    draw_traps()          # Animate and draw traps for the current level
-    draw_enemies()        # Draw enemies
-    draw_bullets()        # Draw bullets
-    draw_walls(Game.level)  # Draw walls around the maze
-    draw_hud()             # Draw on-screen HUD (score, lives)
+    player()                 # Draw blocky character at player position
+    draw_traps()             # Animate and draw traps for the current level
+    draw_enemies()           # Draw enemies
+    draw_bullets()           # Draw bullets
+    draw_walls(Game.level)   # Draw walls around the maze
+    draw_hud()               # Draw on-screen HUD (score, lives)
+
+    # Game state overlays
+    if Game.state == 'gameover':
+        draw_center_text("GAME OVER - Press R to Restart")
+    elif Game.state == 'win':
+        draw_center_text("YOU WIN! - Press R to Restart")
     glutSwapBuffers()
 
 def keyboardListener(key, x, y):
@@ -45,8 +51,18 @@ def keyboardListener(key, x, y):
     if key in (b'R', b'r'):
         Game.score = 0
         Game.lives = 5
+        Position.player = [100.0, -100.0, 0.0, 0.0]
+        Position.player_grid = [0, 0]
+        Game.state = 'playing'
+        # Reset timers
+        Game.last_trap_hit_time = 0.0
+        Game.last_enemy_hit_time = 0.0
+        # Recompute camera immediately
+        cam_state()
     
 def specialKeyListener(key, x, y):
+    if Game.state != 'playing':
+        return
     x, y, z, r = Position.player
     # Recompute grid from position to avoid drift
     gx = int(x // window.tile_w)
@@ -142,6 +158,8 @@ def specialKeyListener(key, x, y):
     Position.player_grid = [gx, gy]
 
 def mouseListener(button, state, x, y):
+    if Game.state != 'playing':
+        return
     # Left click: shoot in the view direction
     if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
         px, py, pz, r = Position.player
@@ -155,6 +173,11 @@ def mouseListener(button, state, x, y):
         cam_state()
 
 def animation():
+    # Stop updates when not playing
+    if Game.state != 'playing':
+        time.sleep(1/100)
+        glutPostRedisplay()
+        return
     # time step
     t_now = glutGet(GLUT_ELAPSED_TIME) / 1000.0
     if Game.last_update_time == 0.0:
@@ -280,7 +303,7 @@ def animation():
             if b in Bullets.items:
                 Bullets.items.remove(b)
 
-    # Trap damage if player on trap tile (with debounce)
+    # Trap damage if player on trap tile (with debounce) and Win tile detection
     px, py, pz, pr = Position.player
     gx = int(px // window.tile_w)
     gy = int((-py) // window.tile_h)
@@ -288,10 +311,17 @@ def animation():
     m_col = gx * 2 + 1
     maze = Mazes.maze[Game.level - 1]
     if 0 <= m_row < len(maze) and 0 <= m_col < len(maze[0]):
-        if maze[m_row][m_col] in ('2', '3', '4'):
+        cell = maze[m_row][m_col]
+        if cell in ('2', '3', '4'):
             if t_now - Game.last_trap_hit_time > 1.0:  # 1s cooldown
                 Game.lives = max(0, Game.lives - 1)
                 Game.last_trap_hit_time = t_now
+        elif cell == 'E':
+            Game.state = 'win'
+
+    # Game over state when lives depleted
+    if Game.lives <= 0:
+        Game.state = 'gameover'
 
     # Update window title with score/lives
     try:

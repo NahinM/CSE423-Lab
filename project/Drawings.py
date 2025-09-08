@@ -197,6 +197,35 @@ def draw_hud():
     glMatrixMode(GL_PROJECTION)
     glPopMatrix()
 
+def draw_center_text(text):
+    # Use HUD-style orthographic projection
+    vp = glGetIntegerv(GL_VIEWPORT)
+    vp_x, vp_y, vp_w, vp_h = vp
+    glMatrixMode(GL_PROJECTION)
+    glPushMatrix()
+    glLoadIdentity()
+    glOrtho(0, vp_w, 0, vp_h, -1, 1)
+    glMatrixMode(GL_MODELVIEW)
+    glPushMatrix()
+    glLoadIdentity()
+
+    glDisable(GL_DEPTH_TEST)
+    glColor3f(1, 1, 0)
+    msg = text
+    # Approximate text width with 9x15 font metrics
+    char_w = 9
+    x = (vp_w - char_w * len(msg)) // 2
+    y = vp_h // 2
+    glRasterPos2f(x, y)
+    for ch in msg:
+        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ord(ch))
+    glEnable(GL_DEPTH_TEST)
+
+    glMatrixMode(GL_MODELVIEW)
+    glPopMatrix()
+    glMatrixMode(GL_PROJECTION)
+    glPopMatrix()
+
 def draw_trap_2(px,py,z_shift):
     # three spikes (Cylinder with sharp end) in a tile
     spike_h = 50

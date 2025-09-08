@@ -28,6 +28,7 @@ class Game:
     last_trap_hit_time = 0.0  # seconds, to debounce trap damage
     last_update_time = 0.0    # seconds, for delta-time
     last_enemy_hit_time = 0.0 # seconds, to debounce enemy contact damage
+    state = 'playing'         # 'playing' | 'win' | 'gameover'
 
 class Bullets:
     items = []  # each: { 'x':float,'y':float,'dx':float,'dy':float,'speed':float,'life':float,'r':float }
