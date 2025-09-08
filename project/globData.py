@@ -26,6 +26,21 @@ class Game:
 class Mazes:
     maze = list()
 
+# The pattern to draw the mase is as follows:
+# 1 -> wall
+# 0 -> tile
+# 1111111 -> row for only walls
+# 1010101 -> row for alternating wall and tile
+# 1111111 -> row for only walls
+# 1010101 -> row for alternating wall and tile
+# 1111111 -> row for only walls
+# 1010101 -> row for alternating wall and tile
+# 1111111 -> row for only walls
+# To change the maze layout, edit the walls to 0s.
+# the position of tile and wall is fixed. Only the walls can be removed.
+# but if the tile has different number other than 0 it means there is an trap with that id.
+# the trap are drawn in Drawings.py with the function draw_<trap_id>
+
 with open("level1.txt") as fl:
     m = list()
     for line in fl:
