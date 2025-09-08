@@ -68,6 +68,7 @@ def load_mazes(path):
 
 load_mazes("level1.txt")
 load_mazes("level2.txt")
+load_mazes("level3.txt")
 
 if __name__=='__main__':
     print(Mazes.maze[0])
