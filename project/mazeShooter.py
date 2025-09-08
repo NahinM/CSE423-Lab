@@ -30,7 +30,9 @@ def showScreen():
     glViewport(0, 0, 1000, 800)  # Set viewport size
 
     setupCamera()  # Configure camera perspective
-    floor()
+    floor(Game.level)
+    player()  # Draw blocky character at player position
+    draw_traps()  # Animate and draw traps for the current level
     glutSwapBuffers()
 
 def keyboardListener(key, x, y):
@@ -132,7 +134,10 @@ def specialKeyListener(key, x, y):
     Position.player_grid = [gx, gy]
 
 def mouseListener(button, state, x, y):
-    pass
+    # On left mouse click, toggle camera state
+    if button == GLUT_LEFT_BUTTON and state == GLUT_DOWN:
+        window.cam_state = (window.cam_state + 1) % 2
+        cam_state()
 
 def animation():
     time.sleep(1/100)
