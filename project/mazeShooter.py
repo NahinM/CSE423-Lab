@@ -33,7 +33,7 @@ def showScreen():
     setupCamera()  # Configure camera perspective
     floor(Game.level)
     player()                 # Draw blocky character at player position
-    draw_traps()             # Animate and draw traps for the current level
+    draw_traps(Game.level)   # Animate and draw traps for the current level
     draw_enemies()           # Draw enemies
     draw_bullets()           # Draw bullets
     draw_walls(Game.level)   # Draw walls around the maze
@@ -43,7 +43,11 @@ def showScreen():
     if Game.state == 'gameover':
         draw_center_text("GAME OVER - Press R to Restart")
     elif Game.state == 'win':
-        draw_center_text("YOU WIN! - Press R to Restart")
+        # If more levels exist, prompt to go next; else final win
+        if Game.level < len(Mazes.maze):
+            draw_center_text(f"Level {Game.level} completed. press L to go to next level")
+        else:
+            draw_center_text("You won")
     glutSwapBuffers()
 
 def keyboardListener(key, x, y):
@@ -59,6 +63,18 @@ def keyboardListener(key, x, y):
         Game.last_enemy_hit_time = 0.0
         # Recompute camera immediately
         cam_state()
+    # L: advance to next level when on win screen
+    if key in (b'L', b'l') and Game.state == 'win':
+        if Game.level < len(Mazes.maze):
+            Game.level += 1
+            Position.player = [100.0, -100.0, 0.0, 0.0]
+            Position.player_grid = [0, 0]
+            Game.lives = 5
+            Game.state = 'playing'
+            # Reset timers for damage debounce
+            Game.last_trap_hit_time = 0.0
+            Game.last_enemy_hit_time = 0.0
+            cam_state()
     
 def specialKeyListener(key, x, y):
     if Game.state != 'playing':
@@ -303,7 +319,7 @@ def animation():
             if b in Bullets.items:
                 Bullets.items.remove(b)
 
-    # Trap damage if player on trap tile (with debounce) and Win tile detection
+    # Trap score penalty if player on trap tile (with debounce) and Win tile detection
     px, py, pz, pr = Position.player
     gx = int(px // window.tile_w)
     gy = int((-py) // window.tile_h)
@@ -314,7 +330,7 @@ def animation():
         cell = maze[m_row][m_col]
         if cell in ('2', '3', '4'):
             if t_now - Game.last_trap_hit_time > 1.0:  # 1s cooldown
-                Game.lives = max(0, Game.lives - 1)
+                Game.score = max(0, Game.score - 5) # reduce score if on trap
                 Game.last_trap_hit_time = t_now
         elif cell == 'E':
             Game.state = 'win'

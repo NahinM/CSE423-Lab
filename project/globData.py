@@ -10,7 +10,7 @@ class window:
 
 class Position:
     player = [100.0, -100.0, 0.0, 0.0] # x, y, z, rotation (list for mutability)
-    player_grid = [0, 0] # grid x, y
+    player_grid = [0, 0] # grid position x, y
     cam = [80.0, 0.0, 100.0]
     lookAt = [80.0, -210.0, 100.0]
 
@@ -24,7 +24,7 @@ class Color:
 class Game:
     score = 0
     lives = 5
-    level = 2
+    level = 1
     last_trap_hit_time = 0.0  # seconds, to debounce trap damage
     last_update_time = 0.0    # seconds, for delta-time
     last_enemy_hit_time = 0.0 # seconds, to debounce enemy contact damage
