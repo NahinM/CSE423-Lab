@@ -1,5 +1,6 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
+from OpenGL.GLUT import GLUT_BITMAP_9_BY_15, glutBitmapCharacter
 from OpenGL.GLU import *
 from globData import *
 import math
@@ -59,7 +60,7 @@ def draw_tile(px,py,w,h):
     glVertex3f(px,py-h,0)
     glEnd()
 
-def draw_wall(px,py,w,h,top=0,btm=0,lft=0,rgt=0,clr=0): # walls -> top bottom left right
+def draw_wall_arround(px,py,w,h,top=0,btm=0,lft=0,rgt=0,clr=0): # walls -> top bottom left right
     wall_h = window.wall_heigth
     glColor3f(*Color.wall[clr])
     if top:
@@ -91,7 +92,7 @@ def draw_wall(px,py,w,h,top=0,btm=0,lft=0,rgt=0,clr=0): # walls -> top bottom le
         glVertex3f(px+w,py,wall_h)
         glEnd()
 
-def floor(level=1):
+def floor(level):
     maze = Mazes.maze[level-1]
     nw,nh = (len(maze[0])-1)>>1,(len(maze)-1)>>1 #number of segments for the floor
     startx,starty = 0,0 #co-ordinates of the floor
@@ -100,18 +101,22 @@ def floor(level=1):
             glColor3f(*Color.floor[(i+j)%2])
             px,py = startx+j*window.tile_w, starty-i*window.tile_h
             draw_tile(px,py,window.tile_w,window.tile_h)
-            
+
+def draw_walls(level):
+    maze = Mazes.maze[level-1]
+    nw,nh = (len(maze[0])-1)>>1,(len(maze)-1)>>1 #number of segments for the floor
+    startx,starty = 0,0 #co-ordinates of the floor
     for i in range(nh):
         m_y = i*2+1
         for j in range(nw):
             m_x = j*2+1
             top=btm=lft=rgt=0
-            if maze[m_y-1][m_x]=='1': top=1
-            if maze[m_y+1][m_x]=='1': btm=1
-            if maze[m_y][m_x-1]=='1': lft=1
-            if maze[m_y][m_x+1]=='1': rgt=1
+            if maze[m_y-1][m_x]=='#': top=1
+            if maze[m_y+1][m_x]=='#': btm=1
+            if maze[m_y][m_x-1]=='#': lft=1
+            if maze[m_y][m_x+1]=='#': rgt=1
             px,py = startx+j*window.tile_w,starty-i*window.tile_h
-            draw_wall(px,py,window.tile_w,window.tile_h,top=top,btm=btm,lft=lft,rgt=rgt,clr=(i+j)%2)
+            draw_wall_arround(px,py,window.tile_w,window.tile_h,top=top,btm=btm,lft=lft,rgt=rgt,clr=(i+j)%2)
 
 def draw_traps(level=1):
     maze = Mazes.maze[level-1]
@@ -140,6 +145,57 @@ def draw_traps(level=1):
                     # saw: gentle bob
                     z_shift = 15 + 25 * (0.5 + 0.5 * math.sin(2*math.pi*0.8*t + j))
                     draw_trap_4(cx, cy, z_shift)
+
+def draw_bullets():
+    glColor3f(1,1,0)
+    for b in list(Bullets.items):
+        glPushMatrix()
+        glTranslatef(b['x'], b['y'], 20)
+        glutSolidSphere(6, 10, 10)
+        glPopMatrix()
+
+def draw_enemies():
+    for e in Enemies.items:
+        if not e.get('alive', True):
+            continue
+        glPushMatrix()
+        glTranslatef(e['x'], e['y'], 0)
+        glColor3f(0.8,0.1,0.1)
+        # simple blocky enemy
+        _draw_box(0,0,20, 30, 20, 40, (0.8,0.1,0.1))
+        _draw_box(0,0,50, 20, 20, 20, (0.95,0.8,0.8))
+        glPopMatrix()
+
+def draw_hud():
+    # Query current viewport to match on-screen coordinates
+    vp = glGetIntegerv(GL_VIEWPORT)
+    vp_x, vp_y, vp_w, vp_h = vp
+    # Setup 2D orthographic projection
+    glMatrixMode(GL_PROJECTION)
+    glPushMatrix()
+    glLoadIdentity()
+    glOrtho(0, vp_w, 0, vp_h, -1, 1)
+    glMatrixMode(GL_MODELVIEW)
+    glPushMatrix()
+    glLoadIdentity()
+
+    glDisable(GL_DEPTH_TEST)
+    glColor3f(1,1,1)
+
+    def draw_text(x, y, text):
+        glRasterPos2f(x, y)
+        for ch in text:
+            glutBitmapCharacter(GLUT_BITMAP_9_BY_15, ord(ch))
+
+    draw_text(10, vp_h - 24, f"Score: {Game.score}")
+    draw_text(10, vp_h - 48, f"Lives: {Game.lives}")
+
+    glEnable(GL_DEPTH_TEST)
+    # Restore matrices
+    glMatrixMode(GL_MODELVIEW)
+    glPopMatrix()
+    glMatrixMode(GL_PROJECTION)
+    glPopMatrix()
 
 def draw_trap_2(px,py,z_shift):
     # three spikes (Cylinder with sharp end) in a tile
@@ -185,3 +241,5 @@ def draw_trap_4(px,py,z_shift):
     glColor3f(0.75, 0.75, 0.75)  # Grey color for saw blade
     gluCylinder(gluNewQuadric(), saw_r, saw_r, saw_h, 30, 1)
     glPopMatrix()
+
+# old bullet/enemy functions removed; use draw_bullets/draw_enemies instead

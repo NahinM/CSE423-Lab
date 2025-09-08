@@ -24,21 +24,28 @@ class Color:
 class Game:
     score = 0
     lives = 5
-    level = 1
+    level = 2
+    last_trap_hit_time = 0.0  # seconds, to debounce trap damage
+    last_update_time = 0.0    # seconds, for delta-time
+    last_enemy_hit_time = 0.0 # seconds, to debounce enemy contact damage
+
+class Bullets:
+    items = []  # each: { 'x':float,'y':float,'dx':float,'dy':float,'speed':float,'life':float,'r':float }
+
+class Enemies:
+    items = []  # each: { 'x':float,'y':float,'alive':bool,'r':float }
 
 class Mazes:
     maze = list()
 
-# The pattern to draw the mase is as follows:
-# 1 -> wall
+# The pattern to draw the maze is as follows:
+# # -> wall
 # 0 -> tile
-# 1111111 -> row for only walls
-# 1010101 -> row for alternating wall and tile
-# 1111111 -> row for only walls
-# 1010101 -> row for alternating wall and tile
-# 1111111 -> row for only walls
-# 1010101 -> row for alternating wall and tile
-# 1111111 -> row for only walls
+# ####### -> row for only walls
+# #0#0#0# -> row for alternating wall and tile
+# ####### -> row for only walls
+# #0#0#0# -> row for alternating wall and tile
+# ####### -> row for only walls
 # To change the maze layout, edit the walls to 0s.
 # the position of tile and wall is fixed. Only the walls can be removed.
 # but if the tile has different number other than 0 it means there is an trap with that id.
@@ -48,14 +55,18 @@ class Mazes:
 # 3 -> fire trap
 # 4 -> saw trap
 
-with open("level1.txt") as fl:
-    m = list()
-    for line in fl:
-        m.append([c for c in line if c!='\n'])
-        for c in line:
-            if c not in ['0','1','\n'] and c.isdigit():
-                traps.trap_list.append([int(c), len(m)*2-1, (len(m[0])-1)//2*2])
-    Mazes.maze.append(m)
+def load_mazes(path):
+    with open(path) as fl:
+        m = list()
+        for line in fl:
+            m.append([c for c in line if c!='\n'])
+            for c in line:
+                if c not in ['0','#','\n'] and c.isdigit():
+                    traps.trap_list.append([int(c), len(m)*2-1, (len(m[0])-1)//2*2])
+        Mazes.maze.append(m)
+
+load_mazes("level1.txt")
+load_mazes("level2.txt")
 
 if __name__=='__main__':
     print(Mazes.maze[0])
